@@ -15,13 +15,13 @@ FinPay comienza como un monolito modular. Un único proceso de aplicación conti
 - `notifications`: notificaciones simuladas.
 - `audit`: registro append-only de acciones relevantes.
 
-Los módulos se crearán conforme avance el roadmap. Esta estructura es una dirección inicial, no una obligación de crear clases o abstracciones vacías desde el primer día.
+Los módulos se crearán conforme avance el roadmap. `users` contiene el registro y acceso; `security` aplica autenticación bearer JWT y autorización por rol. Esta estructura es una dirección inicial, no una obligación de crear clases o abstracciones vacías desde el primer día.
 
 ## Persistencia e infraestructura
 
 PostgreSQL es la base de datos principal. La instancia local se ejecuta en Docker Compose y conserva sus datos en un volumen nombrado. Las credenciales de desarrollo se configuran mediante variables de entorno y no se guardan como secretos de producción.
 
-Flyway gestionará los cambios de esquema cuando comience la Fase 1. Kafka, Redis y servicios distribuidos quedan fuera de esta base: se evaluarán cuando las necesidades del sistema lo justifiquen.
+Flyway gestiona las tablas de identidad y revocación desde la Fase 2. Las contraseñas se guardan con hash BCrypt. Los JWT HS256 usan una clave externa al repositorio, expiran a los 15 minutos por defecto y tienen un `jti` que se revoca en PostgreSQL al cerrar sesión. Kafka, Redis y servicios distribuidos quedan fuera de esta base: se evaluarán cuando las necesidades del sistema lo justifiquen.
 
 ## Evolución
 
