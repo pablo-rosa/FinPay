@@ -91,3 +91,16 @@ Las contraseñas se almacenan con el `DelegatingPasswordEncoder` de Spring Secur
 6. Frontend, pruebas e integraciones introducidas cuando aporten valor.
 
 El detalle de cada fase se irá incorporando cuando se implemente; esta base no incluye todavía código de aplicación.
+
+## Cuentas
+
+- `POST /api/accounts`: crea una cuenta en una moneda ISO 4217 soportada, con saldo inicial cero.
+- `GET /api/accounts` y `GET /api/accounts/{id}`: lista o consulta las cuentas propias.
+- `GET /api/accounts/{id}/balance`: consulta el saldo de una cuenta propia.
+- `PATCH /api/accounts/{id}/status`: cambia el estado entre `ACTIVE`, `BLOCKED` y `CLOSED`. `CLOSED` es terminal.
+
+Todas las rutas requieren JWT. El saldo no puede editarse directamente; se actualizará mediante los movimientos del ledger en una fase posterior. La Fase 3 incorpora persistencia JPA con validación del esquema Flyway y bloqueo optimista.
+
+## Ledger
+
+La Fase 4 añade el ledger de doble entrada. Cada registro interno requiere al menos un débito y un crédito, ambos totales deben coincidir, las cuentas deben compartir moneda y el débito no puede dejar saldo negativo. Las entradas y transacciones son append-only en PostgreSQL. El saldo de cuenta se actualiza en la misma transacción que el asiento. No hay endpoint público de posting todavía; las operaciones visibles para el usuario llegarán con transferencias en la Fase 5.

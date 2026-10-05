@@ -26,3 +26,5 @@ Flyway gestiona las tablas de identidad y revocación desde la Fase 2. Las contr
 ## Evolución
 
 La extracción de un módulo a un servicio independiente requerirá una razón técnica observable, límites de dominio estables y una justificación de los costes de comunicación y operación. No se asume una migración automática a microservicios.
+
+Desde la Fase 3, `accounts` usa JPA sobre el mismo esquema PostgreSQL y Flyway mantiene la tabla. La entidad incluye una columna de versión para detectar escrituras concurrentes. Las cuentas pertenecen a un usuario, empiezan con saldo cero y exponen lectura de saldo; las modificaciones monetarias quedan reservadas al ledger.
