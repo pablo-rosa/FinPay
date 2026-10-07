@@ -88,7 +88,7 @@ Las contraseñas se almacenan con el `DelegatingPasswordEncoder` de Spring Secur
 3. Identidad, usuarios y seguridad JWT (implementada).
 4. Cuentas y ledger (implementada).
 5. Transferencias (implementada).
-6. Payments, frontend y fases posteriores.
+6. Payments (implementada), frontend y fases posteriores.
 
 El detalle de cada fase se irá incorporando cuando se implemente; esta base no incluye todavía código de aplicación.
 
@@ -110,4 +110,12 @@ La Fase 4 añade el ledger de doble entrada. Cada registro interno requiere al m
 - `POST /api/transfers`: transfiere un importe positivo entre dos cuentas activas de la misma moneda. El usuario debe ser propietario de la cuenta de origen.
 - `GET /api/transfers` y `GET /api/transfers/{id}`: consulta el historial de transferencias iniciadas por el usuario.
 
-La transferencia, los dos asientos del ledger y la actualización de ambos saldos se confirman en una sola transacción PostgreSQL. Las cuentas se bloquean en orden estable para impedir que solicitudes concurrentes gasten dos veces el mismo saldo. Las claves de idempotencia se incorporarán con pagos en la Fase 6.
+La transferencia, los dos asientos del ledger y la actualización de ambos saldos se confirman en una sola transacción PostgreSQL. Las cuentas se bloquean en orden estable para impedir que solicitudes concurrentes gasten dos veces el mismo saldo. Los pagos usan claves de idempotencia propias en la Fase 6.
+
+## Payments
+
+`POST /api/payments` requiere el encabezado `Idempotency-Key`. La clave queda asociada al usuario y a una huella de la solicitud en PostgreSQL: repetir la misma petición devuelve el mismo pago, mientras que reutilizar la clave con datos distintos da un conflicto.
+
+Flujo de estados: `CREATED` → `PENDING` → `AUTHORIZED` → `CAPTURED` → `COMPLETED`. Se puede rechazar un pago pendiente; si el saldo deja de estar disponible antes de capturarlo, queda `FAILED`. Las acciones están disponibles en `/api/payments/{id}/submit`, `/authorize`, `/reject`, `/capture` y `/complete`. El historial solo muestra pagos del usuario autenticado. Los reembolsos se reservan para una fase posterior.
+
+La captura registra dos asientos `PAYMENT` y actualiza los saldos en una sola transacción. La autorización comprueba fondos, pero no los reserva; por eso la captura vuelve a comprobarlos bajo bloqueo de las cuentas.
