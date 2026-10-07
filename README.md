@@ -136,3 +136,14 @@ Abre `http://localhost:3000` e inicia sesión con un usuario previamente registr
 La interfaz incluye resumen, cuentas, transferencias, pagos y actividad. Las cuentas nuevas empiezan con saldo cero y el backend aún no tiene una operación para ingresar fondos. Para transferencias y pagos, el destino se introduce con el UUID de una cuenta. La actividad combina los historiales de pagos y transferencias porque aún no existe un endpoint general de transacciones. Las acciones de pago permiten avanzar manualmente por sus estados.
 
 La Fase 7 del roadmap queda implementada. Las fases posteriores pueden ampliar el producto con funciones administrativas, fraude, notificaciones, auditoría y operaciones adicionales.
+
+### Usuarios de demostración
+
+Al iniciar el backend con la configuración local de `.env`, se crean de forma idempotente estos usuarios si todavía no existen:
+
+| Rol | Email | Contraseña |
+|---|---|---|
+| Administrador (`ADMIN`) | `admin@finpay.local` | `FinPayAdmin2026!` |
+| Usuario (`USER`) | `user@finpay.local` | `FinPayUser2026!` |
+
+Puedes usar cualquiera para entrar en `http://localhost:3000`. Las contraseñas se almacenan con BCrypt. El inicializador no cambia cuentas ya existentes y el registro público sigue creando únicamente usuarios `USER`. La activación está en `.env` mediante `FINPAY_BOOTSTRAP_ENABLED`; debe permanecer desactivada fuera del entorno local. Estas credenciales son exclusivamente de demostración.
