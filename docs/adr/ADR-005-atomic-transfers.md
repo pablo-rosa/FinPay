@@ -13,5 +13,5 @@ Antes de validar el saldo, el servicio bloquea las dos filas de cuenta en orden 
 ## Consecuencias
 
 - El historial registra transferencias completadas; los fallos no dejan ni transferencia ni asientos parciales.
-- La clave de idempotencia de cliente se pospone a la Fase 6, como indica el roadmap.
+- No se implementa idempotencia de cliente para transferencias. Una repetición de la petición puede crear otra transferencia si supera las validaciones y hay saldo suficiente.
 - La prueba de integración prepara fondos iniciales como fixture; no se añade un endpoint de depósito fuera de esta fase.

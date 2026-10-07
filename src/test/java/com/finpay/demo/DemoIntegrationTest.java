@@ -1,5 +1,6 @@
 package com.finpay.demo;
 
+import com.finpay.AbstractPostgresIntegrationTest;
 import com.finpay.accounts.infrastructure.AccountRepository;
 import com.finpay.ledger.domain.LedgerDirection;
 import com.finpay.ledger.domain.LedgerTransactionType;
@@ -36,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @AutoConfigureMockMvc
 @Transactional
-class DemoIntegrationTest {
+class DemoIntegrationTest extends AbstractPostgresIntegrationTest {
 
     private static final Pattern ACCESS_TOKEN = Pattern.compile("\\\"accessToken\\\":\\\"([^\\\"]+)\\\"");
     private static final Pattern ACCOUNT_JSON = Pattern.compile("\\\"id\\\":\\\"([^\\\"]+)\\\".*?\\\"balance\\\":([0-9.]+)", Pattern.DOTALL);

@@ -1,5 +1,6 @@
 package com.finpay.ledger;
 
+import com.finpay.AbstractPostgresIntegrationTest;
 import com.finpay.accounts.domain.Account;
 import com.finpay.accounts.infrastructure.AccountRepository;
 import com.finpay.ledger.application.LedgerPosting;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "finpay.security.jwt.secret=finpay-test-secret-key-32-bytes!!")
 @AutoConfigureMockMvc
 @Transactional
-class LedgerIntegrationTest {
+class LedgerIntegrationTest extends AbstractPostgresIntegrationTest {
 
     private static final String PASSWORD = "P@ssw0rd-123!";
     private static final Pattern ACCESS_TOKEN = Pattern.compile("\\\"accessToken\\\":\\\"([^\\\"]+)\\\"");

@@ -1,5 +1,6 @@
 package com.finpay.accounts;
 
+import com.finpay.AbstractPostgresIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "finpay.security.jwt.secret=finpay-test-secret-key-32-bytes!!")
 @AutoConfigureMockMvc
 @Transactional
-class AccountIntegrationTest {
+class AccountIntegrationTest extends AbstractPostgresIntegrationTest {
 
     private static final String PASSWORD = "P@ssw0rd-123!";
     private static final Pattern ACCESS_TOKEN = Pattern.compile("\\\"accessToken\\\":\\\"([^\\\"]+)\\\"");

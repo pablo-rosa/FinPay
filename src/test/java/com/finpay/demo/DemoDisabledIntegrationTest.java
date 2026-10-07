@@ -1,5 +1,6 @@
 package com.finpay.demo;
 
+import com.finpay.AbstractPostgresIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -15,7 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "finpay.bootstrap.enabled=false"
 })
 @AutoConfigureMockMvc
-class DemoDisabledIntegrationTest {
+class DemoDisabledIntegrationTest extends AbstractPostgresIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
 

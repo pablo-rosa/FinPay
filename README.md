@@ -1,125 +1,81 @@
 # FinPay
 
-FinPay es una simulación de una plataforma bancaria y de pagos, creada como proyecto de portfolio para practicar decisiones de ingeniería de software. No procesa dinero real.
+FinPay es una simulación de una plataforma bancaria y de pagos para practicar ingeniería de software. No mueve dinero real y no está preparada para operar como entidad financiera.
 
-## Estado
+## Estado actual
 
-FinPay es actualmente un monolito modular con backend Spring Boot, PostgreSQL y una interfaz Next.js. Ya incluye identidad y JWT, cuentas, ledger de doble partida, transferencias, ciclo de pagos y una demo de portfolio aislada por sesión.
-## Arquitectura inicial
+El repositorio contiene un monolito modular desplegado como una aplicación Spring Boot, PostgreSQL, migraciones Flyway y una interfaz web Next.js. Las fases 0–7 del Prompt Maestro están implementadas. La Fase 8 ya tiene pruebas unitarias, de integración con Testcontainers y E2E; su verificación completa está pendiente porque la última ejecución no pudo acceder al daemon de Docker y no ejecutó las pruebas E2E. Las fases 9–18 siguen pendientes.
 
-La aplicación se organizará por módulos de negocio dentro de un único despliegue: `users`, `accounts`, `payments`, `transfers`, `ledger`, `fraud`, `notifications` y `audit`. Los módulos compartirán PostgreSQL al inicio y mantendrán límites explícitos. No se introducirán microservicios ni mensajería hasta que exista una necesidad concreta.
+FinPay incluye registro y login, JWT con revocación, cuentas, ledger de doble partida, transferencias, ciclo de pagos con idempotencia en la creación, interfaz web y una demo de portfolio con fondos ficticios aislados por sesión. No incluye Kafka, reglas antifraude, notificaciones, Redis, microservicios ni despliegue de producción.
 
-PostgreSQL es la base de datos principal. Docker Compose proporciona una instancia local con volumen persistente. Flyway gestiona el esquema `finpay`. Las credenciales predeterminadas de Compose son exclusivamente para desarrollo local y no deben reutilizarse fuera de ese entorno.
+## Documentación
 
-Consulta [la descripción de arquitectura](docs/architecture.md) y el [ADR-001](docs/adr/ADR-001-modular-monolith.md) para conocer las decisiones iniciales.
+- [Arquitectura actual](docs/architecture.md): topología, módulos activos y límites actuales.
+- [Descripción técnica](docs/technical-overview.md): estructura, flujos, persistencia, API, pruebas y limitaciones.
+- [Decisiones arquitectónicas (ADR)](docs/adr/): motivos y consecuencias de las decisiones adoptadas.
+- [Contexto para una nueva sesión de Codex](docs/codex-context.md): guía para retomar el proyecto desde el estado documentado.
+- El roadmap de fases corresponde al apartado 37 del Prompt Maestro proporcionado por el autor; su resumen está en esta página y en la [guía para una nueva sesión de Codex](docs/codex-context.md).
 
-## Requisitos
+## Fases del Prompt Maestro
+
+| Fase | Alcance | Estado actual |
+|---|---|---|
+| 0 | Repositorio, README, arquitectura, Docker básico y configuración | Terminada |
+| 1 | Spring Boot, PostgreSQL, Flyway, módulos y health endpoint | Terminada |
+| 2 | Usuarios, login, JWT, roles y seguridad | Terminada |
+| 3 | Creación y consulta de cuentas, estado y saldo | Terminada |
+| 4 | Ledger de doble entrada y consistencia | Terminada |
+| 5 | Transferencias, validaciones, transacciones y concurrencia | Terminada |
+| 6 | Motor de pagos, estados e idempotencia | Terminada; reembolsos pendientes |
+| 7 | Frontend: login, dashboard, cuentas, transferencias, pagos y actividad | Terminada; demo de portfolio añadida |
+| 8 | Pruebas unitarias, integración, Testcontainers y E2E | Implementada; ejecución completa pendiente de validar con Docker y navegador |
+| 9 | Kafka, eventos, productores, consumidores, reintentos y DLQ | Pendiente |
+| 10 | Reglas antifraude y procesamiento asíncrono | Pendiente |
+| 11 | Notificaciones asíncronas e historial | Pendiente |
+| 12 | Redis para caché, idempotencia o rate limiting justificados | Pendiente |
+| 13 | Extracción progresiva de microservicios | Pendiente |
+| 14 | Docker completo | Pendiente; Compose solo proporciona PostgreSQL |
+| 15 | CI/CD | Pendiente |
+| 16 | Observabilidad | Pendiente; solo existe Actuator health |
+| 17 | AWS | Pendiente |
+| 18 | Kubernetes opcional | Pendiente |
+
+El detalle de capacidades implementadas y pendientes, incluida la diferencia entre “código de pruebas presente” y “pruebas ejecutadas con éxito”, está en la [descripción técnica](docs/technical-overview.md).
+
+## Requisitos locales
 
 - Docker Desktop con Docker Compose v2.
-- Java 21 y Maven para las fases que incorporen el backend.
+- Java 21 y Maven.
+- Node.js 20.9 o posterior y npm para el frontend y las pruebas E2E.
 
-## Entorno local
-
-Copia `.env.example` a `.env` y configura `JWT_SECRET` con un valor aleatorio de al menos 32 bytes. En PowerShell puedes generar uno con:
+Copia `.env.example` como `.env`, configura un `JWT_SECRET` aleatorio de al menos 32 bytes y mantén `.env` fuera de Git. En PowerShell puedes generar la clave así:
 
 ```powershell
 [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 ```
 
-Pega el resultado en `.env`. Ese archivo está excluido de Git; no guardes el secreto en el repositorio.
+Inicia PostgreSQL local:
 
-Inicia PostgreSQL:
-
-```bash
+```powershell
 docker compose up -d postgres
 ```
 
-Comprueba el estado:
-
-```bash
-docker compose ps
-```
-
-Detén el servicio conservando los datos:
-
-```bash
-docker compose down
-```
-
-Para eliminar también los datos persistidos de desarrollo:
-
-```bash
-docker compose down -v
-```
-
-La base de FinPay queda disponible en `localhost:5433` por defecto, con base de datos y usuario `finpay`. El puerto del contenedor sigue siendo `5432`; se usa `5433` en el host para evitar conflictos con instalaciones locales de PostgreSQL.
+Compose publica PostgreSQL en `localhost:5433` por defecto; dentro del contenedor escucha en `5432`. El volumen `postgres_data` conserva la base entre reinicios. `docker compose down -v` borra los datos locales de desarrollo.
 
 ## Backend
 
-Se requiere Java 21 y Maven. Con PostgreSQL iniciado, ejecuta las pruebas:
+Con PostgreSQL disponible:
 
-```bash
+```powershell
 mvn test
-```
-
-Inicia la aplicación:
-
-```bash
 mvn spring-boot:run
 ```
 
-El endpoint de salud está disponible en `http://localhost:8080/actuator/health`. La conexión JDBC, la clave JWT y su vigencia pueden configurarse mediante `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET` y `JWT_ACCESS_TOKEN_TTL` (por defecto, 15 minutos).
+El health endpoint es `http://localhost:8080/actuator/health`. Las variables `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET` y `JWT_ACCESS_TOKEN_TTL` configuran conexión y JWT. El token dura 15 minutos por defecto. El bootstrap local de usuarios solo se activa con `FINPAY_BOOTSTRAP_ENABLED`; sus valores se controlan mediante variables privadas del `.env`.
 
-## Identidad y seguridad
+## Frontend
 
-- `POST /api/auth/register`: crea un usuario con rol `USER`.
-- `POST /api/auth/login`: valida email y contraseña y devuelve un JWT de acceso.
-- `POST /api/auth/logout`: revoca el JWT actual en PostgreSQL.
-- `GET /api/users/me`: devuelve la identidad y roles del token.
-- `/api/admin/**` requiere rol `ADMIN`; el registro público nunca permite asignarlo.
-
-Las contraseñas se almacenan con el `DelegatingPasswordEncoder` de Spring Security (BCrypt por defecto). Los JWT usan HS256, tienen expiración y un identificador único; el backend comprueba la revocación en PostgreSQL. `ADMIN` debe asignarse por un proceso administrativo controlado.
-
-## Roadmap
-
-1. Preparación del repositorio y del entorno local (implementada).
-2. Backend inicial con Spring Boot, PostgreSQL, Flyway y health endpoint (implementada).
-3. Identidad, usuarios y seguridad JWT (implementada).
-4. Cuentas y ledger (implementada).
-5. Transferencias (implementada).
-6. Ciclo de vida e idempotencia de pagos (implementada).
-7. Interfaz web y demo de portfolio (implementada).
-## Cuentas
-
-- `POST /api/accounts`: crea una cuenta en una moneda ISO 4217 soportada, con saldo inicial cero.
-- `GET /api/accounts` y `GET /api/accounts/{id}`: lista o consulta las cuentas propias.
-- `GET /api/accounts/{id}/balance`: consulta el saldo de una cuenta propia.
-- `PATCH /api/accounts/{id}/status`: cambia el estado entre `ACTIVE`, `BLOCKED` y `CLOSED`. `CLOSED` es terminal.
-
-Todas las rutas requieren JWT. El saldo no puede editarse directamente; se actualizará mediante los movimientos del ledger en una fase posterior. La Fase 3 incorpora persistencia JPA con validación del esquema Flyway y bloqueo optimista.
-
-## Ledger
-
-La Fase 4 añade el ledger de doble entrada. Cada registro interno requiere al menos un débito y un crédito, ambos totales deben coincidir, las cuentas deben compartir moneda y el débito no puede dejar saldo negativo. Las entradas y transacciones son append-only en PostgreSQL. El saldo de cuenta se actualiza en la misma transacción que el asiento. No hay endpoint público de posting todavía; las operaciones visibles para el usuario llegarán con transferencias en la Fase 5.
-
-## Transferencias
-
-- `POST /api/transfers`: transfiere un importe positivo entre dos cuentas activas de la misma moneda. El usuario debe ser propietario de la cuenta de origen.
-- `GET /api/transfers` y `GET /api/transfers/{id}`: consulta el historial de transferencias iniciadas por el usuario.
-
-La transferencia, los dos asientos del ledger y la actualización de ambos saldos se confirman en una sola transacción PostgreSQL. Las cuentas se bloquean en orden estable para impedir que solicitudes concurrentes gasten dos veces el mismo saldo. Los pagos usan claves de idempotencia propias en la Fase 6.
-
-## Payments
-
-`POST /api/payments` requiere el encabezado `Idempotency-Key`. La clave queda asociada al usuario y a una huella de la solicitud en PostgreSQL: repetir la misma petición devuelve el mismo pago, mientras que reutilizar la clave con datos distintos da un conflicto.
-
-Flujo de estados: `CREATED` → `PENDING` → `AUTHORIZED` → `CAPTURED` → `COMPLETED`. Se puede rechazar un pago pendiente; si el saldo deja de estar disponible antes de capturarlo, queda `FAILED`. Las acciones están disponibles en `/api/payments/{id}/submit`, `/authorize`, `/reject`, `/capture` y `/complete`. El historial solo muestra pagos del usuario autenticado. Los reembolsos se reservan para una fase posterior.
-
-La captura registra dos asientos `PAYMENT` y actualiza los saldos en una sola transacción. La autorización comprueba fondos, pero no los reserva; por eso la captura vuelve a comprobarlos bajo bloqueo de las cuentas.
-
-## Interfaz web (Fase 7)
-
-La interfaz requiere Node.js 20.9 o posterior y npm. Con PostgreSQL iniciado, ejecuta el backend en una terminal (`mvn spring-boot:run`) y, desde la raíz del repositorio, inicia el frontend:
+En otra terminal, desde la raíz:
 
 ```powershell
 cd frontend
@@ -128,27 +84,17 @@ npm install
 npm run dev
 ```
 
-Abre `http://localhost:3000` e inicia sesión con un usuario previamente registrado mediante el API. Next.js reenvía `/api/*` al backend; configura `FINPAY_API_URL` en `frontend/.env.local` si el backend no está en `http://localhost:8080`. La sesión del prototipo se guarda en `sessionStorage` y se elimina al cerrar sesión o cerrar la pestaña.
+Abre `http://localhost:3000`. Next.js reenvía `/api/*` al backend configurado en `FINPAY_API_URL` (por defecto, `http://localhost:8080`). La interfaz incluye login, resumen, cuentas, transferencias, pagos y actividad. La sesión del prototipo usa `sessionStorage`.
 
-La interfaz incluye resumen, cuentas, transferencias, pagos y actividad. Las cuentas nuevas empiezan con saldo cero y el backend aún no tiene una operación para ingresar fondos. Para transferencias y pagos, el destino se introduce con el UUID de una cuenta. La actividad combina los historiales de pagos y transferencias porque aún no existe un endpoint general de transacciones. Las acciones de pago permiten avanzar manualmente por sus estados.
+Para ejecutar las pruebas E2E, deja PostgreSQL, el backend con la demo habilitada y el frontend en marcha; después ejecuta desde `frontend`:
 
-La Fase 7 del roadmap queda implementada. Las fases posteriores pueden ampliar el producto con funciones administrativas, fraude, notificaciones, auditoría y operaciones adicionales.
+```powershell
+npx playwright install chromium
+npm run test:e2e
+```
 
-### Usuario de pruebas local
+La suite Maven usa PostgreSQL 16 temporal con Testcontainers. Docker debe estar activo y accesible. Si JUnit no detecta Docker, las pruebas de integración se omiten; revisa los informes antes de interpretar un `mvn test` exitoso como verificación completa.
 
-Al iniciar el backend con el bootstrap habilitado, se crea de forma idempotente una cuenta de prueba con rol `USER`, si no existe:
+## Alcance
 
-- Email: `user@finpay.local`
-- Contraseña: `FinPayUser2026!`
-
-Puedes cambiar estos valores en `.env`. La contraseña se almacena con BCrypt. El registro público sigue asignando únicamente el rol `USER`. El bootstrap debe permanecer desactivado fuera del entorno local.
-
-El administrador de desarrollo se configura únicamente en el `.env` local mediante `FINPAY_BOOTSTRAP_ADMIN_EMAIL` y `FINPAY_BOOTSTRAP_ADMIN_PASSWORD`. Esos valores se dejan vacíos en `.env.example`; no compartas ni subas el `.env`.
-
-## Demo de portfolio
-
-En el entorno local puedes pulsar **Probar FinPay Demo** en la pantalla de inicio. El backend prepara una sesión aislada por visitante, crea un usuario con rol `USER`, dos cuentas en EUR y emite un JWT normal. La cuenta de origen recibe **10.000 EUR ficticios**; la segunda cuenta sirve para probar transferencias y pagos. Todas las operaciones posteriores usan los mismos endpoints y reglas de negocio que las cuentas normales.
-
-El saldo inicial se registra como `DEMO_FUNDING` en el ledger: un crédito a la cuenta del usuario y un débito a la contrapartida interna `DEMO_CAPITAL`. No existe un endpoint de ingreso de fondos y la creación normal de cuentas conserva saldo cero. La interfaz muestra el aviso “Demo · fondos simulados”.
-
-Activa el mecanismo con `FINPAY_DEMO_ENABLED=true` (la plantilla local ya lo habilita; fuera del entorno de portfolio permanece desactivado). Para evitar que una sesión pública consuma los datos de otra, cada visitante recibe sus propias cuentas. Se limitan a 10 sesiones nuevas por IP y hora; una nueva sesión puede iniciarse al volver a pulsar el botón. Los registros previos permanecen en la base para conservar su historial. Para reiniciar completamente la base local, incluido el ledger, ejecuta `docker compose down -v` y vuelve a iniciar PostgreSQL y el backend; esto elimina todos los datos locales, no solo la demo.
+Los saldos iniciales ordinarios son cero. No hay depósitos/retiros, reservas de fondos, reembolsos ni endpoint general de transacciones. La demo crea dos cuentas EUR aisladas y registra su financiación ficticia en el ledger. Consulta las [limitaciones conocidas](docs/technical-overview.md#limitaciones-conocidas).
