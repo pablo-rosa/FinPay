@@ -119,3 +119,20 @@ La transferencia, los dos asientos del ledger y la actualización de ambos saldo
 Flujo de estados: `CREATED` → `PENDING` → `AUTHORIZED` → `CAPTURED` → `COMPLETED`. Se puede rechazar un pago pendiente; si el saldo deja de estar disponible antes de capturarlo, queda `FAILED`. Las acciones están disponibles en `/api/payments/{id}/submit`, `/authorize`, `/reject`, `/capture` y `/complete`. El historial solo muestra pagos del usuario autenticado. Los reembolsos se reservan para una fase posterior.
 
 La captura registra dos asientos `PAYMENT` y actualiza los saldos en una sola transacción. La autorización comprueba fondos, pero no los reserva; por eso la captura vuelve a comprobarlos bajo bloqueo de las cuentas.
+
+## Interfaz web (Fase 7)
+
+La interfaz requiere Node.js 20.9 o posterior y npm. Con PostgreSQL iniciado, ejecuta el backend en una terminal (`mvn spring-boot:run`) y, desde la raíz del repositorio, inicia el frontend:
+
+```powershell
+cd frontend
+Copy-Item .env.example .env.local
+npm install
+npm run dev
+```
+
+Abre `http://localhost:3000` e inicia sesión con un usuario previamente registrado mediante el API. Next.js reenvía `/api/*` al backend; configura `FINPAY_API_URL` en `frontend/.env.local` si el backend no está en `http://localhost:8080`. La sesión del prototipo se guarda en `sessionStorage` y se elimina al cerrar sesión o cerrar la pestaña.
+
+La interfaz incluye resumen, cuentas, transferencias, pagos y actividad. Las cuentas nuevas empiezan con saldo cero y el backend aún no tiene una operación para ingresar fondos. Para transferencias y pagos, el destino se introduce con el UUID de una cuenta. La actividad combina los historiales de pagos y transferencias porque aún no existe un endpoint general de transacciones. Las acciones de pago permiten avanzar manualmente por sus estados.
+
+La Fase 7 del roadmap queda implementada. Las fases posteriores pueden ampliar el producto con funciones administrativas, fraude, notificaciones, auditoría y operaciones adicionales.

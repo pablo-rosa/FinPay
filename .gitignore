@@ -16,3 +16,8 @@ target/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Next.js frontend
+frontend/node_modules/
+frontend/.next/
+frontend/out/
