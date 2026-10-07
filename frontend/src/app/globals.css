@@ -57,6 +57,9 @@ a { color: inherit; text-decoration: none; }
 .wide { width: 100%; min-height: 48px; margin-top: 6px; }
 .form-error, .inline-error { padding: 11px 13px; border: 1px solid #f2d2cb; border-radius: 9px; color: #9d433b; background: #fff5f2; font-size: 12px; line-height: 1.5; }
 .form-hint { margin-top: 18px; color: #8a9997; font-size: 11px; line-height: 1.6; text-align: center; }
+.login-divider { display: flex; align-items: center; gap: 12px; margin-top: 23px; color: #95a29e; font-size: 10px; }
+.login-divider::before, .login-divider::after { height: 1px; flex: 1; background: #e5ece9; content: ""; }
+.demo-login-button { margin-top: 10px; }
 
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 246px minmax(0, 1fr); }
 .sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 27px 17px 18px; color: #d7e6df; background: #173b35; }
@@ -85,6 +88,7 @@ a { color: inherit; text-decoration: none; }
 .topbar { min-height: 88px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); }
 .breadcrumb { color: #869492; font-size: 12px; }
 .topbar-right { display: flex; align-items: center; gap: 12px; }
+.demo-indicator { display: inline-flex; align-items: center; min-height: 30px; padding: 0 11px; border: 1px solid #edd8a7; border-radius: 20px; color: #80601f; background: #fbf3df; font-size: 10px; font-weight: 750; white-space: nowrap; }
 .topbar-date { color: #899693; font-size: 11px; }
 .content { width: min(100%, 1160px); margin: 0 auto; padding-top: 37px; }
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
@@ -186,6 +190,7 @@ a { color: inherit; text-decoration: none; }
   .main-area { padding: 0 17px 35px; }
   .topbar { min-height: 67px; }
   .topbar-date { display: none; }
+  .demo-indicator { min-height: 27px; padding-inline: 8px; font-size: 9px; }
   .content { padding-top: 25px; }
   .page-heading { align-items: flex-start; flex-direction: column; }
   .heading-action { align-self: stretch; }

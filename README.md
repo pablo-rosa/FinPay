@@ -4,8 +4,7 @@ FinPay es una simulación de una plataforma bancaria y de pagos, creada como pro
 
 ## Estado
 
-El proyecto comienza como un monolito modular. La Fase 0 preparó el entorno local. La Fase 1 añadió Spring Boot, PostgreSQL, Flyway y un endpoint de salud. La Fase 2 incorpora registro, login, JWT, roles y protección de rutas.
-
+FinPay es actualmente un monolito modular con backend Spring Boot, PostgreSQL y una interfaz Next.js. Ya incluye identidad y JWT, cuentas, ledger de doble partida, transferencias, ciclo de pagos y una demo de portfolio aislada por sesión.
 ## Arquitectura inicial
 
 La aplicación se organizará por módulos de negocio dentro de un único despliegue: `users`, `accounts`, `payments`, `transfers`, `ledger`, `fraud`, `notifications` y `audit`. Los módulos compartirán PostgreSQL al inicio y mantendrán límites explícitos. No se introducirán microservicios ni mensajería hasta que exista una necesidad concreta.
@@ -83,15 +82,13 @@ Las contraseñas se almacenan con el `DelegatingPasswordEncoder` de Spring Secur
 
 ## Roadmap
 
-1. Preparación del repositorio y del entorno local.
+1. Preparación del repositorio y del entorno local (implementada).
 2. Backend inicial con Spring Boot, PostgreSQL, Flyway y health endpoint (implementada).
 3. Identidad, usuarios y seguridad JWT (implementada).
 4. Cuentas y ledger (implementada).
 5. Transferencias (implementada).
-6. Payments (implementada), frontend y fases posteriores.
-
-El detalle de cada fase se irá incorporando cuando se implemente; esta base no incluye todavía código de aplicación.
-
+6. Ciclo de vida e idempotencia de pagos (implementada).
+7. Interfaz web y demo de portfolio (implementada).
 ## Cuentas
 
 - `POST /api/accounts`: crea una cuenta en una moneda ISO 4217 soportada, con saldo inicial cero.
@@ -137,13 +134,21 @@ La interfaz incluye resumen, cuentas, transferencias, pagos y actividad. Las cue
 
 La Fase 7 del roadmap queda implementada. Las fases posteriores pueden ampliar el producto con funciones administrativas, fraude, notificaciones, auditoría y operaciones adicionales.
 
-### Usuarios de demostración
+### Usuario de pruebas local
 
-Al iniciar el backend con la configuración local de `.env`, se crean de forma idempotente estos usuarios si todavía no existen:
+Al iniciar el backend con el bootstrap habilitado, se crea de forma idempotente una cuenta de prueba con rol `USER`, si no existe:
 
-| Rol | Email | Contraseña |
-|---|---|---|
-| Administrador (`ADMIN`) | `admin@finpay.local` | `FinPayAdmin2026!` |
-| Usuario (`USER`) | `user@finpay.local` | `FinPayUser2026!` |
+- Email: `user@finpay.local`
+- Contraseña: `FinPayUser2026!`
 
-Puedes usar cualquiera para entrar en `http://localhost:3000`. Las contraseñas se almacenan con BCrypt. El inicializador no cambia cuentas ya existentes y el registro público sigue creando únicamente usuarios `USER`. La activación está en `.env` mediante `FINPAY_BOOTSTRAP_ENABLED`; debe permanecer desactivada fuera del entorno local. Estas credenciales son exclusivamente de demostración.
+Puedes cambiar estos valores en `.env`. La contraseña se almacena con BCrypt. El registro público sigue asignando únicamente el rol `USER`. El bootstrap debe permanecer desactivado fuera del entorno local.
+
+El administrador de desarrollo se configura únicamente en el `.env` local mediante `FINPAY_BOOTSTRAP_ADMIN_EMAIL` y `FINPAY_BOOTSTRAP_ADMIN_PASSWORD`. Esos valores se dejan vacíos en `.env.example`; no compartas ni subas el `.env`.
+
+## Demo de portfolio
+
+En el entorno local puedes pulsar **Probar FinPay Demo** en la pantalla de inicio. El backend prepara una sesión aislada por visitante, crea un usuario con rol `USER`, dos cuentas en EUR y emite un JWT normal. La cuenta de origen recibe **10.000 EUR ficticios**; la segunda cuenta sirve para probar transferencias y pagos. Todas las operaciones posteriores usan los mismos endpoints y reglas de negocio que las cuentas normales.
+
+El saldo inicial se registra como `DEMO_FUNDING` en el ledger: un crédito a la cuenta del usuario y un débito a la contrapartida interna `DEMO_CAPITAL`. No existe un endpoint de ingreso de fondos y la creación normal de cuentas conserva saldo cero. La interfaz muestra el aviso “Demo · fondos simulados”.
+
+Activa el mecanismo con `FINPAY_DEMO_ENABLED=true` (la plantilla local ya lo habilita; fuera del entorno de portfolio permanece desactivado). Para evitar que una sesión pública consuma los datos de otra, cada visitante recibe sus propias cuentas. Se limitan a 10 sesiones nuevas por IP y hora; una nueva sesión puede iniciarse al volver a pulsar el botón. Los registros previos permanecen en la base para conservar su historial. Para reiniciar completamente la base local, incluido el ledger, ejecuta `docker compose down -v` y vuelve a iniciar PostgreSQL y el backend; esto elimina todos los datos locales, no solo la demo.

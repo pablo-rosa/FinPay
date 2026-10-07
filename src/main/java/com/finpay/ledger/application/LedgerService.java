@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -81,6 +82,45 @@ public class LedgerService {
             transaction.addEntry(new LedgerEntry(UUID.randomUUID(), transaction, account,
                     posting.amount(), posting.direction()));
         }
+        return transactionRepository.saveAndFlush(transaction);
+    }
+
+    /** Posts initial fictitious portfolio-demo funds against an internal, non-customer counter-account. */
+    @Transactional
+    public LedgerTransaction postDemoFunding(String reference, UUID accountId, BigDecimal amount) {
+        if (reference == null || reference.isBlank() || reference.length() > 100) {
+            throw failure("INVALID_LEDGER_REFERENCE", "Ledger reference must contain between 1 and 100 characters");
+        }
+        if (amount == null || amount.signum() <= 0) {
+            throw failure("INVALID_LEDGER_AMOUNT", "Demo funding must be positive");
+        }
+        try {
+            amount = amount.setScale(4, RoundingMode.UNNECESSARY);
+        } catch (ArithmeticException exception) {
+            throw failure("INVALID_LEDGER_AMOUNT", "Ledger amounts support at most four decimal places");
+        }
+        if (amount.precision() > 19) {
+            throw failure("INVALID_LEDGER_AMOUNT", "Ledger amount exceeds the supported precision");
+        }
+        if (transactionRepository.existsByReference(reference)) {
+            throw failure("DUPLICATE_LEDGER_REFERENCE", "Ledger reference already exists");
+        }
+
+        List<Account> accounts = accountRepository.findAllByIdForUpdate(List.of(accountId));
+        if (accounts.isEmpty()) {
+            throw failure("LEDGER_ACCOUNT_NOT_FOUND", "Demo funding account was not found");
+        }
+        Account account = accounts.getFirst();
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw failure("LEDGER_ACCOUNT_NOT_ACTIVE", "Demo funding requires an active account");
+        }
+
+        account.applyLedgerEntry(amount);
+        LedgerTransaction transaction = new LedgerTransaction(UUID.randomUUID(), reference, LedgerTransactionType.DEMO_FUNDING);
+        transaction.addEntry(new LedgerEntry(UUID.randomUUID(), transaction, account,
+                amount, LedgerDirection.CREDIT));
+        transaction.addEntry(new LedgerEntry(UUID.randomUUID(), transaction, "DEMO_CAPITAL",
+                amount, LedgerDirection.DEBIT));
         return transactionRepository.saveAndFlush(transaction);
     }
 

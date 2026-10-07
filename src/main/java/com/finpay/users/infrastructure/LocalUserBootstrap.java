@@ -15,7 +15,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
 
-/** Creates optional local-only demonstration accounts. Public registration still grants USER only. */
+/** Creates optional local-only accounts for manual testing. Public registration still grants USER only. */
 @Component
 @ConditionalOnProperty(name = "finpay.bootstrap.enabled", havingValue = "true")
 public class LocalUserBootstrap implements ApplicationRunner {
@@ -30,8 +30,8 @@ public class LocalUserBootstrap implements ApplicationRunner {
     public LocalUserBootstrap(
             JdbcUserRepository users,
             PasswordEncoder passwordEncoder,
-            @Value("${finpay.bootstrap.admin.email}") String adminEmail,
-            @Value("${finpay.bootstrap.admin.password}") String adminPassword,
+            @Value("${finpay.bootstrap.admin.email:}") String adminEmail,
+            @Value("${finpay.bootstrap.admin.password:}") String adminPassword,
             @Value("${finpay.bootstrap.user.email}") String userEmail,
             @Value("${finpay.bootstrap.user.password}") String userPassword
     ) {
@@ -46,10 +46,19 @@ public class LocalUserBootstrap implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        requireUsablePassword(adminPassword);
-        requireUsablePassword(userPassword);
-        createIfMissing(adminEmail, adminPassword, Role.ADMIN);
-        createIfMissing(userEmail, userPassword, Role.USER);
+        createConfiguredUser(adminEmail, adminPassword, Role.ADMIN);
+        createConfiguredUser(userEmail, userPassword, Role.USER);
+    }
+
+    private void createConfiguredUser(String email, String password, Role role) {
+        if (email.isBlank() && password.isBlank()) {
+            return;
+        }
+        if (email.isBlank() || password.isBlank()) {
+            throw new IllegalStateException("Both email and password are required for a configured local demo user.");
+        }
+        requireUsablePassword(password);
+        createIfMissing(email, password, role);
     }
 
     private void createIfMissing(String email, String password, Role role) {

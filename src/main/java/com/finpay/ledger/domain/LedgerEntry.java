@@ -27,9 +27,12 @@ public class LedgerEntry {
     @JoinColumn(name = "transaction_id", nullable = false, updatable = false)
     private LedgerTransaction transaction;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "account_id", nullable = false, updatable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", updatable = false)
     private Account account;
+
+    @Column(name = "counter_account_code", length = 50, updatable = false)
+    private String counterAccountCode;
 
     @Column(nullable = false, precision = 19, scale = 4, updatable = false)
     private BigDecimal amount;
@@ -53,12 +56,22 @@ public class LedgerEntry {
         this.direction = direction;
     }
 
+    public LedgerEntry(UUID id, LedgerTransaction transaction, String counterAccountCode,
+                       BigDecimal amount, LedgerDirection direction) {
+        this.id = id;
+        this.transaction = transaction;
+        this.counterAccountCode = counterAccountCode;
+        this.amount = amount;
+        this.direction = direction;
+    }
+
     @PrePersist
     void initializeTimestamp() { createdAt = Instant.now(); }
 
     public UUID getId() { return id; }
     public LedgerTransaction getTransaction() { return transaction; }
     public Account getAccount() { return account; }
+    public String getCounterAccountCode() { return counterAccountCode; }
     public BigDecimal getAmount() { return amount; }
     public LedgerDirection getDirection() { return direction; }
     public Instant getCreatedAt() { return createdAt; }
