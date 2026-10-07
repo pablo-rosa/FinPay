@@ -86,9 +86,9 @@ Las contraseñas se almacenan con el `DelegatingPasswordEncoder` de Spring Secur
 1. Preparación del repositorio y del entorno local.
 2. Backend inicial con Spring Boot, PostgreSQL, Flyway y health endpoint (implementada).
 3. Identidad, usuarios y seguridad JWT (implementada).
-4. Cuentas y ledger.
-5. Transferencias y pagos.
-6. Frontend, pruebas e integraciones introducidas cuando aporten valor.
+4. Cuentas y ledger (implementada).
+5. Transferencias (implementada).
+6. Payments, frontend y fases posteriores.
 
 El detalle de cada fase se irá incorporando cuando se implemente; esta base no incluye todavía código de aplicación.
 
@@ -104,3 +104,10 @@ Todas las rutas requieren JWT. El saldo no puede editarse directamente; se actua
 ## Ledger
 
 La Fase 4 añade el ledger de doble entrada. Cada registro interno requiere al menos un débito y un crédito, ambos totales deben coincidir, las cuentas deben compartir moneda y el débito no puede dejar saldo negativo. Las entradas y transacciones son append-only en PostgreSQL. El saldo de cuenta se actualiza en la misma transacción que el asiento. No hay endpoint público de posting todavía; las operaciones visibles para el usuario llegarán con transferencias en la Fase 5.
+
+## Transferencias
+
+- `POST /api/transfers`: transfiere un importe positivo entre dos cuentas activas de la misma moneda. El usuario debe ser propietario de la cuenta de origen.
+- `GET /api/transfers` y `GET /api/transfers/{id}`: consulta el historial de transferencias iniciadas por el usuario.
+
+La transferencia, los dos asientos del ledger y la actualización de ambos saldos se confirman en una sola transacción PostgreSQL. Las cuentas se bloquean en orden estable para impedir que solicitudes concurrentes gasten dos veces el mismo saldo. Las claves de idempotencia se incorporarán con pagos en la Fase 6.

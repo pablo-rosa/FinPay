@@ -33,6 +33,11 @@ public class LedgerService {
 
     @Transactional
     public LedgerTransaction post(String reference, List<LedgerPosting> postings) {
+        return post(reference, postings, LedgerTransactionType.POSTING);
+    }
+
+    @Transactional
+    public LedgerTransaction post(String reference, List<LedgerPosting> postings, LedgerTransactionType type) {
         if (reference == null || reference.isBlank() || reference.length() > 100) {
             throw failure("INVALID_LEDGER_REFERENCE", "Ledger reference must contain between 1 and 100 characters");
         }
@@ -68,7 +73,7 @@ public class LedgerService {
             }
         });
 
-        LedgerTransaction transaction = new LedgerTransaction(UUID.randomUUID(), reference, LedgerTransactionType.POSTING);
+        LedgerTransaction transaction = new LedgerTransaction(UUID.randomUUID(), reference, type);
         for (LedgerPosting posting : postings) {
             Account account = byId.get(posting.accountId());
             account.applyLedgerEntry(posting.direction() == LedgerDirection.CREDIT
